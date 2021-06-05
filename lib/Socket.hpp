@@ -8,7 +8,7 @@
 class Socket {
     public:
         Socket(int domain, int type, int protocol);
-        int GetSocket();
+        int GetSocketId();
         void SetAddress(sa_family_t sin_family, int port, const char* addr);
         int Bind();
         bool IsValid();

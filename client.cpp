@@ -1,39 +1,22 @@
 //TEMPORARY CLIENT
 #include <iostream>
 #include <string>
+#include <string.h>
 #include <thread>
-#include "lib/Socket.hpp"
+#include "lib/Client.hpp"
 
-void receive(Socket mySocket) {
-    while (1) {
-        std::string msg = mySocket.ReceiveString(mySocket.GetSocket());
-        if (msg != "") std::cout << msg << "\n";
-    }
-}
-
-int main() {
-    Socket mySocket = Socket(AF_INET, SOCK_STREAM, 0);
-
-    if (!mySocket.IsValid()) {
-        std::cout << "error on socket creation.\n";
-        return 1;
-    }
+int main(int argc, char *argv[]) {
+    Client myClient;
 
     Address server = Address(AF_INET, 6660, "127.0.0.1");
 
-    if (mySocket.Connect(server) != 0)  {
-        std::cout << " error on connect.\n";
-        //return 1;
-    }
+    myClient.SetServerAddress(server);
 
-    std::thread readThread(receive, mySocket);
+    myClient.ConnectToServer();
 
-    while(1){
-        std::string msg;
-        std::getline(std::cin, msg);
+    myClient.Start();
 
-        mySocket.SendString(mySocket.GetSocket(), msg, 0);
-    }
+    myClient.WaitForStop();
 
     return 0;
 }

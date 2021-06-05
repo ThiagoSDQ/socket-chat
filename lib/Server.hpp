@@ -4,6 +4,7 @@
 #include <map>
 #include <set>
 #include <thread>
+#include <atomic>
 #include "Socket.hpp"
 
 class Server {
@@ -21,8 +22,8 @@ class Server {
         Socket serverSocket;
         std::thread* mainThread;
         std::map<int, std::thread*> clientThread;
-        bool stopServer;
-        std::map<int, bool> stopClientThread;
+        std::atomic_bool stopServer;
+        std::map<int, std::atomic_bool> stopClientThread;
         std::map<std::size_t, std::set<int>> rooms;
         std::hash<std::string> strHash;
 };

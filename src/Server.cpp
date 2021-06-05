@@ -49,7 +49,8 @@ void Server::WaitForConnection() {
 }
 
 void Server::Interact(int client) {
-    std::size_t clientRoom;
+    std::size_t clientRoom = strHash("default");
+    rooms[clientRoom].insert(client);
     std::string clientName;
 
     std::cout << "Client " << client << " connected!\n";
@@ -64,33 +65,36 @@ void Server::Interact(int client) {
         if (cmd == "login") {
             clientName = text;
         } else if (cmd == "room") {
+            rooms[clientRoom].erase(client);
             clientRoom = strHash(text);
             rooms[clientRoom].insert(client);
         } else if (cmd == "msg") {
             SendToRoom(clientRoom, client, clientName + ": " + text);
-        } else if (cmd == "exit"){
+        } else if (cmd == "exit"){ 
             stopClientThread[client] = true;
         }
     }  
 
-    std::cout << "Disconnected " << client << "\n";
     close(client);
 }
 
 void Server::SendToRoom(std::size_t room, int client, std::string message) {
     for (auto it : rooms[room]){
         if (it != client) {
-            serverSocket.SendString(it, "msg: " + message, 0);
+            serverSocket.SendString(it, "msg:" + message, 0);
         }
     }
 }
 
 void Server::CloseAllConnections() {
     for (auto it : clientThread) {
+        serverSocket.SendString(it.first, "stop:", 0);
         stopClientThread[it.first] = true;
     }
 
     for (auto it : clientThread) {
         (*it.second).join();
     }
+
+    serverSocket.Close();
 }

@@ -34,7 +34,7 @@ Socket::Socket(int domain, int type, int protocol) {
     }
 }
 
-int Socket::GetSocket(){
+int Socket::GetSocketId(){
     return socket_;
 }
 
