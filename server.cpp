@@ -4,7 +4,7 @@
 #include "lib/Server.hpp"
 
 int main() {
-    Server myServer(6660);
+    Server myServer(4321, "0.0.0.0");//Same as INADDR_ANY
 
     myServer.Start(5);
 

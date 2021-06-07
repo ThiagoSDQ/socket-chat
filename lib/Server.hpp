@@ -9,7 +9,7 @@
 
 class Server {
     public:
-        Server(int port);
+        Server(int port, const char *addr);
         int Start(int maxConnections);
         void Stop();
 

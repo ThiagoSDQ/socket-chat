@@ -8,6 +8,7 @@ void Client::SetServerAddress(Address addr) {
     serverAddress = addr;
 }
 
+//Attempts to connect to server
 int Client::ConnectToServer() {
     clientSocket.Connect(serverAddress);
     if (errno != EINPROGRESS)  {
@@ -17,15 +18,20 @@ int Client::ConnectToServer() {
     return 0;
 }
 
+//Starts the client
 void Client::Start() {
     stopClient = false;
     stopReceiveThread = false;
     stopReadInputThread = false;
 
+    //Starts two threads
+    //One for receiving messages from the server
     receiveThread = new std::thread (&Client::Receive, this);
+    //And one for reading input from the user
     readInputThread = new std::thread (&Client::ReadInput, this);
 }
 
+//Reads input from the user
 void Client::ReadInput() {
     while(!stopReadInputThread){
         std::string message;
@@ -40,6 +46,7 @@ void Client::ReadInput() {
     }
 }
 
+//Receive messages from the server
 void Client::Receive() {
     while(!stopReceiveThread){
         std::string message = clientSocket.ReceiveString(clientSocket.GetSocketId());
@@ -58,6 +65,7 @@ void Client::Receive() {
     }
 }
 
+//Sets stopClient to true, and notifies the condition variable stop
 void Client::Stop() {
     std::unique_lock<std::mutex> lock(stopMutex);
     std::cout << "Stopping...\n";
@@ -66,12 +74,18 @@ void Client::Stop() {
     stop.notify_one();
 }
 
+//Blocks the thread until the client receive a command to stop,
+//from the user or from the server
 void Client::WaitForStop() {
     std::unique_lock<std::mutex> lock(stopMutex);
+    //Blocks the thread until stopClient is set to true
     stop.wait(lock, [this]{return stopClient;});
+
+    //Marks both threads to stop
     stopReceiveThread = true;
     stopReadInputThread = true;
     
+    //Waits both threads to join
     (*receiveThread).join();
     (*readInputThread).join();
 
