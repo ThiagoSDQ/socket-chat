@@ -5,8 +5,13 @@
 
 int main() {
     Server myServer(4321, "0.0.0.0");//Same as INADDR_ANY
+    int maxConnections = 10;
 
-    myServer.Start(5);
+    if(myServer.Start(maxConnections) == 1){
+        std::cout << "Failed to start server!\n";
+        std::cout << strerror(errno) << "\n";
+        return 1;
+    }
 
     getchar();
 

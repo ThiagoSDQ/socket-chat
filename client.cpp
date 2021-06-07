@@ -1,4 +1,3 @@
-//TEMPORARY CLIENT
 #include <iostream>
 #include <string>
 #include <string.h>
@@ -12,12 +11,17 @@ int main(int argc, char *argv[]) {
 
     myClient.SetServerAddress(server);
 
-    if (myClient.ConnectToServer() == 1){
+    if (myClient.ConnectToServer() == -1){
         std::cout << "Failed to connect to server!\n";
+        std::cout << strerror(errno) << "\n";
         return 1;
     }
 
-    myClient.Start();
+    if (myClient.Start() != 0){
+        std::cout << "Failed to start client!\n";
+        std::cout << strerror(errno) << "\n";
+        return 1;
+    }
 
     myClient.WaitForStop();
 
