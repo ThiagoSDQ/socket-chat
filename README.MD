@@ -28,17 +28,17 @@ The application was built using **GCC 10.2.0**.
 
 ### Server
 
-After running the server it doesn't require any interaction, to stop it, just give it any input. If the server is interrupted, it will send a message to all conected client applications to stop.
+After running the server it doesn't require any interaction, to stop the server just give it any input. If the server is interrupted, it will send a message to all conected client applications to stop.
 
 ### Client
 
-Every interaction with the server follow the model: ```command:{text}```. Therre are 4 commands available:
+Every interaction with the server follow the model: ```command:text```. Therre are 4 commands available:
 
 * ```login```: changes user's display name. Ex: ```login:MyAccount```.
 * ```room```: changes user's room. Only users on the same room receive messages from the user. Ex: ```room:MyRoom```.
 * ```msg```: sends a message to the user's current room. Ex: ```msg:Hello World``` .
 * ```exit```: stop the client application.
 
-The application will also stop if the servers stops. Only ```exit``` doesn't accept ```text```.
+The application will also stop if the server stops. Only ```exit``` doesn't accept ```text```.
 
-Observation: because the input reading blocks the thread, if the server sends a stop signal, the client application will need an input to actually stop.
+Observation: because the input reading blocks the thread, if the server sends a stop signal the client application will need an input to actually stop.
