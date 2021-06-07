@@ -10,34 +10,19 @@
 #include <iostream>
 #include "../lib/Socket.hpp"
 
-//Make socket actions(send, recv, accept,...) non blocking
-int makeSocketNonBlocking(int socket_){
-    int flags = fcntl(socket_, F_GETFL);
-    if (flags != -1) {
-        int setNonBlocking = fcntl(socket_, F_SETFL, flags | O_NONBLOCK);
-        if (setNonBlocking != -1){
-            return 0;
-        }
-    }
-
-    return -1;
+Socket::Socket() {
 }
 
-//Creates new socket
 Socket::Socket(int domain, int type, int protocol) {
     socket_ = socket(domain, type, protocol);
-    
-    if (socket_ != -1) {
-        int nonBlocking = makeSocketNonBlocking(socket_);
-        if (nonBlocking == -1){
-            close(socket_);
-            socket_ = -1;
-        }
-    }
 }
 
 int Socket::GetSocketId(){
     return socket_;
+}
+
+void Socket::SetSocketId(int id){
+    socket_ = id;
 }
 
 bool Socket::IsValid() {
@@ -48,43 +33,65 @@ void Socket::SetAddress(sa_family_t sin_family, int port, const char* addr) {
     address = Address(sin_family, port, addr);
 }
 
+void Socket::SetAddress(Address addr) {
+    address = addr;
+}
+
 //Bind's the socket to the socket address
 int Socket::Bind() {
     return bind(socket_, (sockaddr*)&address, sizeof(sockaddr));
 }
 
-//Start listening for connections
+//Start listening for connections.
+//Returns 0 for sucess and -1 for errors.
 int Socket::Listen(int connections)  {
     return listen(socket_, connections);
 }
 
-//Accept a connection, if there is any, and make the enw socket non blocking.
-int Socket::Accept() {
-    int newSocket = accept(socket_, 0, 0);
+//Accept a connection, if there is any, and make the new socket non-blocking.
+//Returns the new socket.
+Socket Socket::Accept() {
+    Socket newSocket;
+    sockaddr_in newSocketAddr;
+    int addrlen = sizeof(newSocketAddr);
 
-    if (newSocket == -1) return -1; 
+    int newSocketId = accept(socket_, (sockaddr *)&newSocketAddr, (socklen_t *)&addrlen);
 
-    int nonBlocking = makeSocketNonBlocking(newSocket);
+    Address newAddress;
+    newAddress.SetAddress(newSocketAddr);
+    
+    newSocket.SetSocketId(newSocketId);
+    newSocket.SetAddress(newAddress);
 
-    return (nonBlocking == 0 ? newSocket : -1);
+
+    newSocket.MakeSocketNonBlocking();
+
+    return newSocket;
 }
 
 //Open connection with given address
+//Returns 0 for sucess and -1 for errors.
 int Socket::Connect(Address addr) {
-    return connect(socket_, (sockaddr*)addr.GetSockAddr(), sizeof(*addr.GetSockAddr()));
+    if (connect(socket_, (sockaddr*)addr.GetSockAddr(), sizeof(*addr.GetSockAddr())) == -1) {
+        if (errno != EINPROGRESS) {
+            return -1;
+        }
+    }
+
+    return 0;
 }
 
-//Send a string to the socket identified by dest
-int Socket::SendString(int dest, std::string message, int flags) {
-    return send(dest, message.c_str(), message.size()*sizeof(char), flags);
+//Send a string to the socket
+int Socket::SendString(std::string message, int flags) {
+    return send(socket_, message.c_str(), message.size()*sizeof(char), flags);
 }
 
-//Receives a string from the socket identified by source
-std::string Socket::ReceiveString(int source) {
+//Receives a string from the socket
+std::string Socket::ReceiveString() {
     char buf[400];
     memset(buf, 0, sizeof(buf));
 
-    if (recv(source, buf, 399, 0) == -1) {
+    if (recv(socket_, buf, 399, 0) == -1) {
         //If the recv would block, it meand there was no message waiting to be received
         if (errno == EWOULDBLOCK) return "";
 
@@ -99,4 +106,18 @@ std::string Socket::ReceiveString(int source) {
 
 void Socket::Close() {
     close(socket_);
+}
+
+//Make socket actions(send, recv, accept,...) non blocking
+//Return 0 on sucess and -1 for errors
+int Socket::MakeSocketNonBlocking(){
+    int flags = fcntl(socket_, F_GETFL);
+    if (flags != -1) {
+        int setNonBlocking = fcntl(socket_, F_SETFL, flags | O_NONBLOCK);
+        if (setNonBlocking != -1){
+            return 0;
+        }
+    }
+
+    return -1;
 }

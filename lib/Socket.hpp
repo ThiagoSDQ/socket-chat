@@ -7,16 +7,20 @@
 
 class Socket {
     public:
+        Socket();
         Socket(int domain, int type, int protocol);
         int GetSocketId();
+        void SetSocketId(int id);
         void SetAddress(sa_family_t sin_family, int port, const char* addr);
+        void SetAddress(Address addr);
         int Bind();
         bool IsValid();
         int Listen(int connections);
-        int Accept();
+        Socket Accept();
         int Connect(Address addr);
-        int SendString(int dest, std::string message, int flags);
-        std::string ReceiveString(int source);
+        int MakeSocketNonBlocking();
+        int SendString(std::string message, int flags);
+        std::string ReceiveString();
         void Close();
 
     private:

@@ -13,11 +13,11 @@ int Server::Start(int maxConnections) {
     std::cout << "Trying to start...\n";
     if (!serverSocket.IsValid()) return 1;
 
-    std::cout << "Biding...\n";
     if (serverSocket.Bind() < 0) return 1;
 
-    std::cout << "Listening...\n";
     if (serverSocket.Listen(maxConnections) != 0) return 1;
+
+    if (serverSocket.MakeSocketNonBlocking() != 0) return 1;
 
     std::cout << "Starting server!\n";
 
@@ -26,7 +26,6 @@ int Server::Start(int maxConnections) {
 
     return 0;
 }
-
 
 void Server::Stop() {
     std::cout << "Stopping...\n";
@@ -39,13 +38,14 @@ void Server::Stop() {
 void Server::WaitForConnection() {
     std::cout << "Waiting for connections...\n";
     while (!stopServer) {
-        int client = serverSocket.Accept();
+        Socket client = serverSocket.Accept();
 
-        if (client == -1) continue;
+        if (client.GetSocketId() == -1) continue;
 
         //If conection was accepted sucesscifully, starts a new thread to interact wih client
-        stopClientThread[client] = false;
-        clientThread[client] = new std::thread (&Server::Interact, this, client);
+        clientSocket[client.GetSocketId()] = client;
+        stopClientThread[client.GetSocketId()] = false;
+        clientThread[client.GetSocketId()] = new std::thread (&Server::Interact, this, client);
     }
 
     std::cout << "Closing connections\n";
@@ -56,16 +56,16 @@ void Server::WaitForConnection() {
 }
 
 //Starts receiving messages from the client and acting accordingly
-void Server::Interact(int client) {
+void Server::Interact(Socket client) {
     //Client starts in a default room
     std::size_t clientRoom = strHash("default");
-    rooms[clientRoom].insert(client);
+    rooms[clientRoom].insert(client.GetSocketId());
     std::string clientName = "Someone";
 
-    std::cout << "Client " << client << " connected!\n";
+    std::cout << "Client " << client.GetSocketId() << " connected!\n";
 
-    while (!stopClientThread[client]) {
-        std::string message = serverSocket.ReceiveString(client);
+    while (!stopClientThread[client.GetSocketId()]) {
+        std::string message = client.ReceiveString();
     
         //Separates command and text from client's message
         int divider = message.find(":");
@@ -77,26 +77,26 @@ void Server::Interact(int client) {
             clientName = text;
         } else if (cmd == "room") {
             //Removes client from current room and add it to the new one
-            rooms[clientRoom].erase(client);
+            rooms[clientRoom].erase(client.GetSocketId());
             clientRoom = strHash(text);
-            rooms[clientRoom].insert(client);
+            rooms[clientRoom].insert(client.GetSocketId());
         } else if (cmd == "msg") {
             //Redirect client's message to other client in the same room
-            SendToRoom(clientRoom, client, clientName + ": " + text);
+            SendToRoom(clientRoom, client.GetSocketId(), clientName + ": " + text);
         } else if (cmd == "exit"){ 
             //Stops interacting with the client
-            stopClientThread[client] = true;
+            stopClientThread[client.GetSocketId()] = true;
         }
     }  
 
-    close(client);
+    client.Close();
 }
 
 //Send "message" to every client in "room", except "client".
-void Server::SendToRoom(std::size_t room, int client, std::string message) {
+void Server::SendToRoom(std::size_t room, int clientId, std::string message) {
     for (auto it : rooms[room]){
-        if (it != client) {
-            serverSocket.SendString(it, "msg:" + message, 0);
+        if (it != clientId) {
+            clientSocket[it].SendString("msg:" + message, 0);
         }
     }
 }
@@ -104,8 +104,8 @@ void Server::SendToRoom(std::size_t room, int client, std::string message) {
 //Closes connection with every client
 void Server::CloseAllConnections() {
     for (auto it : clientThread) {
-        serverSocket.SendString(it.first, "stop:", 0);
-        stopClientThread[it.first] = true;
+        clientSocket[it.first].SendString("stop:", 0);
+        stopClientThread[clientSocket[it.first].GetSocketId()] = true;
     }
 
     for (auto it : clientThread) {

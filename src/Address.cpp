@@ -15,3 +15,7 @@ Address::Address(sa_family_t sin_family, int port, const char* addr){
 sockaddr_in* Address::GetSockAddr() {
     return &address;
 }
+
+void Address::SetAddress(sockaddr_in addr){
+    address = addr;
+}

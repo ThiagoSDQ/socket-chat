@@ -15,13 +15,14 @@ class Server {
 
     private:
         void WaitForConnection();
-        void Interact(int client);
+        void Interact(Socket client);
         void CloseAllConnections();
-        void SendToRoom(std::size_t room, int client, std::string message);
+        void SendToRoom(std::size_t room, int clientId, std::string message);
 
         Socket serverSocket;
         std::thread* mainThread;
         std::map<int, std::thread*> clientThread;
+        std::map<int, Socket> clientSocket;
         std::atomic_bool stopServer;
         std::map<int, std::atomic_bool> stopClientThread;
         std::map<std::size_t, std::set<int>> rooms;

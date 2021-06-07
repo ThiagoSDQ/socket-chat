@@ -15,7 +15,7 @@ class Client {
         int Start(int maxConnections);
         int ConnectToServer();
         void SetServerAddress(Address addr);
-        void Start();
+        int Start();
         void WaitForStop();
 
     private:

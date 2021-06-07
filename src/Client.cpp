@@ -10,16 +10,13 @@ void Client::SetServerAddress(Address addr) {
 
 //Attempts to connect to server
 int Client::ConnectToServer() {
-    clientSocket.Connect(serverAddress);
-    if (errno != EINPROGRESS)  {
-        return 1;
-    }
-
-    return 0;
+    return clientSocket.Connect(serverAddress);
 }
 
 //Starts the client
-void Client::Start() {
+int Client::Start() {
+    if (clientSocket.MakeSocketNonBlocking() != 0) return 1;
+
     stopClient = false;
     stopReceiveThread = false;
     stopReadInputThread = false;
@@ -29,6 +26,8 @@ void Client::Start() {
     receiveThread = new std::thread (&Client::Receive, this);
     //And one for reading input from the user
     readInputThread = new std::thread (&Client::ReadInput, this);
+
+    return 0;
 }
 
 //Reads input from the user
@@ -37,7 +36,7 @@ void Client::ReadInput() {
         std::string message;
         std::getline(std::cin, message);
 
-        clientSocket.SendString(clientSocket.GetSocketId(), message, 0);
+        clientSocket.SendString(message, 0);
 
         if (message == "exit:"){
             Stop();
@@ -49,7 +48,7 @@ void Client::ReadInput() {
 //Receive messages from the server
 void Client::Receive() {
     while(!stopReceiveThread){
-        std::string message = clientSocket.ReceiveString(clientSocket.GetSocketId());
+        std::string message = clientSocket.ReceiveString();
 
         int divider = message.find(":");
         std::string cmd = message.substr(0, message.find(":"));
