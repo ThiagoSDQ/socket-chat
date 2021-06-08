@@ -69,7 +69,7 @@ void Server::Interact(Socket client) {
     
         //Separates command and text from client's message
         int divider = message.find(":");
-        std::string cmd = message.substr(0, message.find(":"));
+        std::string cmd = message.substr(0, divider);
         std::string text = message.substr(divider+1, message.size());
 
         if (cmd == "login") {
@@ -107,6 +107,7 @@ void Server::SendToRoom(std::size_t room, int clientId, std::string message) {
 void Server::CloseAllConnections() {
     for (auto it : clientThread) {
         clientSocket[it.first].SendString("stop:", 0);
+        clientSocket[it.first].Close();
         stopClientThread[clientSocket[it.first].GetSocketId()] = true;
     }
 
