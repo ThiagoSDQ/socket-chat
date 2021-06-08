@@ -21,6 +21,7 @@ The application has been tested in:
 
 * Ubuntu 20.10
 * Ubuntu 18.04
+* Manjaro 5.10
 
 The application was built using **GCC 10.2.0**.
 
