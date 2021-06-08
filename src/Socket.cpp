@@ -92,7 +92,7 @@ std::string Socket::ReceiveString() {
     memset(buf, 0, sizeof(buf));
 
     if (recv(socket_, buf, 399, 0) == -1) {
-        //If the recv would block, it meand there was no message waiting to be received
+        //If the recv would block, it means there was no message waiting to be received
         if (errno == EWOULDBLOCK) return "";
 
         //If the error was any other, return error

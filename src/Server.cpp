@@ -86,6 +86,8 @@ void Server::Interact(Socket client) {
         } else if (cmd == "exit"){ 
             //Stops interacting with the client
             stopClientThread[client.GetSocketId()] = true;
+        } else if (cmd == "error"){
+            client.SendString("msg:#Server: Failed to receive last message.", 0);
         }
     }  
 
