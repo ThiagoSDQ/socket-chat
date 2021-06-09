@@ -21,6 +21,7 @@ The application has been tested in:
 
 * Ubuntu 20.10
 * Ubuntu 18.04
+* Manjaro 5.10
 
 The application was built using **GCC 10.2.0**.
 
@@ -32,7 +33,7 @@ After running the server it doesn't require any interaction, to stop the server 
 
 ### Client
 
-Every interaction with the server follow the model: ```command:text```. Therre are 4 commands available:
+Every interaction with the server follow the model: ```command:text```. There are 4 commands available:
 
 * ```login```: changes user's display name. Ex: ```login:MyAccount```.
 * ```room```: changes user's room. Only users on the same room receive messages from the user. Ex: ```room:MyRoom```.
